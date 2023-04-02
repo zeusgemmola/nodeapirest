@@ -9,6 +9,24 @@ let productSchema = object({
   id: number().required().positive().integer(),
 });
 
+let productSchemaUpdate = object({
+  title: string(),
+  price: number().positive().integer(),
+  stock: number().positive().integer(),
+  id: number().positive().integer(),
+});
+
+const cleanObj = (obj) =>
+  Object.keys(obj).reduce(
+    (acc, curr) => ({
+      ...acc,
+      ...(obj[curr] !== null && obj[curr] !== undefined
+        ? { [curr]: obj[curr] }
+        : {}),
+    }),
+    {}
+  );
+
 const read = (db) => async (req, res) => {
   try {
     const collection = db.collection("products");
@@ -55,4 +73,27 @@ const readOne = (db) => async (req, res) => {
   }
 };
 
-module.exports = { read, create, readOne };
+const update = (db) => async (req, res) => {
+  const { body } = req;
+
+  try {
+    const id = new ObjectId(req.params.id);
+    const parsedProducts = productSchemaUpdate.cast({ ...body });
+    const product = new Products({ ...parsedProducts });
+
+    // on supprime les propriétés null et undefined
+    const productFiltered = cleanObj(product);
+
+    const collection = db.collection("products");
+    const productUpdated = await collection.updateOne(
+      { _id: id },
+      { $set: { ...productFiltered } }
+    );
+
+    res.status(200).json(productUpdated);
+  } catch (err) {
+    res.status(500).json({ status: 500, message: err && "Erreur serveur" });
+  }
+};
+
+module.exports = { read, create, readOne, update };
