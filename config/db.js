@@ -1,36 +1,16 @@
 const { MongoClient } = require('mongodb');
-let client = null;
+
+const url = 'mongodb://127.0.0.1:27017';
+const client = new MongoClient(url);
 const dbName = 'ecommercebdd';
 
-function connexion(cb) {
-  if (client === null) {
-    client = new MongoClient();
-    client.connect('mongodb://127.0.0.1:20119/', err => {
-      if (err) {
-        client = null;
-        cb(err);
-      } else {
-        cb();
-      }
-    });
-  } else {
-    cb();
-  }
+async function main() {
+  await client.connect();
+  console.log('Connected successfully to server');
+  const db = client.db(dbName);
+  return db;
 }
 
-function bd() {
-  return new Db(client, dbName);
-}
+const connexion = main().catch(console.error); 
 
-function close() {
-  if (client) {
-    client.close();
-    client = null;
-  }
-}
-
-module.exports = {
-  connexion,
-  bd,
-  close,
-};
+module.exports = { connexion }
