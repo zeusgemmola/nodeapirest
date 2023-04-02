@@ -96,4 +96,16 @@ const update = (db) => async (req, res) => {
   }
 };
 
-module.exports = { read, create, readOne, update };
+const deleteOne = (db) => async (req, res) => {
+  try {
+    const id = new ObjectId(req.params.id);
+    const collection = db.collection("products");
+    const productDeleted = await collection.deleteOne({ _id: id });
+
+    res.status(200).json(productDeleted);
+  } catch (err) {
+    res.status(500).json({ status: 500, message: err && "Erreur serveur" });
+  }
+};
+
+module.exports = { read, create, readOne, update, deleteOne };
