@@ -1,5 +1,6 @@
 const { object, string, number } = require("yup");
 const Products = require("./model");
+const { ObjectId } = require("mongodb");
 
 let productSchema = object({
   title: string().required(),
@@ -14,7 +15,7 @@ const read = (db) => async (req, res) => {
     const list = await collection.find({}).toArray();
     res.json(list);
   } catch (error) {
-    res.status(500, err);
+    res.status(500).json({ status: 500, message: err && "Erreur serveur" });
   }
 };
 
@@ -30,12 +31,28 @@ const create = (db) => async (req, res) => {
       const collection = db.collection("products");
       const result = await collection.insertOne(product);
       res.status(200).json(result);
-    } catch (error) {
-      res.status(500, err);
+    } catch (err) {
+      res.status(500).json({ message: "Erreur de format", err });
     }
   } catch (err) {
-    res.status(400).json({ message: "Erreur de format", err });
+    res.status(403).json({ message: "Erreur de format", err });
   }
 };
 
-module.exports = { read, create };
+const readOne = (db) => async (req, res) => {
+  try {
+    const id = new ObjectId(req.params.id);
+    const collection = db.collection("products");
+    const product = await collection.findOne({ _id: id });
+
+    if (product) {
+      res.status(200).json(product);
+    } else {
+      res.status(404).json({ status: 404, message: "Produit introuvable" });
+    }
+  } catch (err) {
+    res.status(500).json({ status: 500, message: err && "Erreur serveur" });
+  }
+};
+
+module.exports = { read, create, readOne };
